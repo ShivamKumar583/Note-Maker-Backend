@@ -4,8 +4,11 @@ from .serializers import NoteSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from django.db.models import Q
 
 # Create your views here.
+
+# function for create and get notes
 @api_view(['GET' , 'POST'])
 def notes(request):
     if request.method == 'GET':
@@ -19,6 +22,9 @@ def notes(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors , status=status.HTTP_400_BAD_REQUEST)    
+
+
+# function for get , put, delete for each note
 @api_view(['GET' , 'PUT' , 'DELETE'])
 def note_detail(request, slug):
     try:
@@ -38,3 +44,12 @@ def note_detail(request, slug):
     elif request.method == 'DELETE':
         note.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+#  function to search notes
+@api_view(['GET'])
+def search_notes(request):
+    query = request.query_params.get("search")
+    notes = Note.objects.filter(Q(title__icontains=query) | Q(body__icontains=query) | Q(category__icontains=query))
+    serializer = NoteSerializer(notes , many=True)
+    return Response(serializer.data , status=status.HTTP_200_OK)
